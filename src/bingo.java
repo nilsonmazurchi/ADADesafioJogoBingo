@@ -61,9 +61,7 @@ public class bingo {
             if (escolhaCartela == 0) {
                 cartelasJogadores[i] = gerarCartelaAleatoria();
             } else if (escolhaCartela == 1) {
-                while (!jogadorCadastrado(nomesJogadores[i], nomesJogadores) || !jogadorUnico(nomesJogadores, i)) {
-                    System.out.println("Você não está cadastrado ou o nickname já foi escolhido. Aguarde a próxima rodada.");
-                    System.out.println("Insira seu nickname novamente:");
+                while (!jogadorCadastrado(nomesJogadores[i], nomesJogadores)) {
                     nomesJogadores[i] = scanner.nextLine();
                 }
 
@@ -78,10 +76,6 @@ public class bingo {
 
     private static boolean jogadorCadastrado(String nomeJogador, String[] nomesJogadores) {
         return Arrays.asList(nomesJogadores).contains(nomeJogador);
-    }
-
-    private static boolean jogadorUnico(String[] nomesJogadores, int indiceAtual) {
-        return Collections.frequency(Arrays.asList(nomesJogadores), nomesJogadores[indiceAtual]) == 1;
     }
 
     private static void sortearNumerosEAtualizarCartelas(int[][] cartelasJogadores, Set<Integer> numerosSorteados) {
@@ -138,10 +132,6 @@ public class bingo {
 
         int indiceVencedor = encontrarIndiceVencedor(cartelasJogadores);
         System.out.println("Nickname do Vencedor: " + nomesJogadores[indiceVencedor]);
-
-        /*System.out.println("Números da Cartela Vencedora:");
-        int[] cartelaVencedora = cartelasJogadores[indiceVencedor];
-        exibirIntArray(cartelaVencedora);*/
 
         int indiceVencedorAtual = encontrarIndiceVencedor(cartelasJogadores);
 
