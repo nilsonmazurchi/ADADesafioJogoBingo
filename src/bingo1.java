@@ -1,8 +1,9 @@
 import java.util.*;
 
-public class bingo2 {
+public class bingo1 {
 
     private static Scanner scanner = new Scanner(System.in);
+    private static Random random = new Random();
 
     public static void main(String[] args) {
         System.out.println("Bem-vindo ao Jogo de Bingo Multiplayer!");
@@ -17,7 +18,7 @@ public class bingo2 {
         Set<Integer> numerosSorteados = new TreeSet<>(); // Utilize TreeSet para manter os números ordenados
 
         System.out.println("Escolha o modo de sorteio: 0 para AUTO ou 1 para MANUAL:");
-        int modoSorteio = Integer.parseInt(scanner.nextLine());
+        int modoSorteio = lerOpcao();
 
         while (true) {
             rodadas++;
@@ -27,6 +28,9 @@ public class bingo2 {
                 sortearNumerosEAtualizarCartelas(cartelasJogadores, numerosSorteados);
             } else if (modoSorteio == 1) {
                 sortearNumeroManualEAtualizarCartelas(cartelasJogadores, numerosSorteados);
+            } else {
+                System.out.println("Escolha inválida. Por favor, digite 0 para AUTO ou 1 para MANUAL.");
+                continue;  // Reinicia o loop para que o usuário faça uma escolha válida.
             }
 
             exibirRanking(nomesJogadores, cartelasJogadores);
@@ -51,6 +55,21 @@ public class bingo2 {
         }
     }
 
+    private static int lerOpcao() {
+        while (true) {
+            try {
+                int modo = Integer.parseInt(scanner.nextLine());
+                if (modo == 0 || modo == 1) {
+                    return modo;
+                } else {
+                    System.out.println("Escolha inválida. Por favor, digite 0 para AUTO ou 1 para MANUAL.");
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Entrada inválida. Por favor, digite 0 para AUTO ou 1 para MANUAL.");
+            }
+        }
+    }
+
     private static String[] obterNomesJogadores() {
         System.out.println("Insira os nicknames dos jogadores separados por hífen (EX.:nome-nome):");
         return scanner.nextLine().split("-");
@@ -61,7 +80,7 @@ public class bingo2 {
 
         System.out.println("Escolha 0 para AUTO ou 1 para MANUAL para gerar as cartelas:");
 
-        int escolhaCartela = Integer.parseInt(scanner.nextLine());
+        int escolhaCartela = lerOpcao();
 
         if (escolhaCartela == 0) {
             for (int i = 0; i < nomesJogadores.length; i++) {
@@ -213,15 +232,6 @@ public class bingo2 {
         return indicesVencedores;
     }
 
-    private static int encontrarIndiceVencedor(int[][] cartelasJogadores) {
-        List<Integer> indicesVencedores = encontrarIndicesVencedores(cartelasJogadores);
-        if (indicesVencedores.isEmpty()) {
-            return -1;
-        } else {
-            // Retornar o índice do primeiro vencedor
-            return indicesVencedores.get(0);
-        }
-    }
 
     private static int sortearNumeroUnicoAleatorio(Set<Integer> numerosSorteados) {
         Random random = new Random();
