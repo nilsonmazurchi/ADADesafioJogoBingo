@@ -14,7 +14,7 @@ public class bingo2 {
         exibirJogadoresECartelas(nomesJogadores, cartelasJogadores);
 
         int rodadas = 0;
-        Set<Integer> numerosSorteados = new HashSet<>();
+        Set<Integer> numerosSorteados = new TreeSet<>(); // Utilize TreeSet para manter os números ordenados
 
         System.out.println("Escolha o modo de sorteio: 0 para AUTO ou 1 para MANUAL:");
         int modoSorteio = Integer.parseInt(scanner.nextLine());
@@ -32,7 +32,12 @@ public class bingo2 {
             exibirRanking(nomesJogadores, cartelasJogadores);
 
             if (verificarBingo(cartelasJogadores)) {
-                System.out.println("Bingo! " + nomesJogadores[encontrarIndiceVencedor(cartelasJogadores)] + " venceu!");
+                List<Integer> indicesVencedores = encontrarIndicesVencedores(cartelasJogadores);
+                System.out.print("Bingo! Vencedores:");
+                for (int indice : indicesVencedores) {
+                    System.out.print(" " + nomesJogadores[indice]);
+                }
+                System.out.println("!");
                 exibirEstatisticasFinais(rodadas, nomesJogadores, cartelasJogadores, numerosSorteados, cartelasIniciaisJogadores);
                 break;
             }
@@ -47,50 +52,44 @@ public class bingo2 {
     }
 
     private static String[] obterNomesJogadores() {
-        System.out.println("Insira os nicknames dos jogadores separados por hífen(EX.:nome-nome):");
+        System.out.println("Insira os nicknames dos jogadores separados por hífen (EX.:nome-nome):");
         return scanner.nextLine().split("-");
     }
 
     private static int[][] inicializarCartelasJogadores(String[] nomesJogadores) {
         int[][] cartelasJogadores = new int[nomesJogadores.length][5];
 
-        for (int i = 0; i < nomesJogadores.length; i++) {
-            System.out.println(nomesJogadores[i] + ", escolha 0 para AUTO ou 1 para MANUAL para gerar sua cartela:");
-            int escolhaCartela = Integer.parseInt(scanner.nextLine());
+        System.out.println("Escolha 0 para AUTO ou 1 para MANUAL para gerar as cartelas:");
 
-            if (escolhaCartela == 0) {
+        int escolhaCartela = Integer.parseInt(scanner.nextLine());
+
+        if (escolhaCartela == 0) {
+            for (int i = 0; i < nomesJogadores.length; i++) {
                 cartelasJogadores[i] = gerarCartelaAutomatica();
-            } else if (escolhaCartela == 1) {
-                while (!jogadorCadastrado(nomesJogadores[i], nomesJogadores)) {
-                    nomesJogadores[i] = scanner.nextLine();
-                }
+            }
+        } else if (escolhaCartela == 1) {
+            System.out.println("Digite os números das cartelas dos jogadores separados por '-' (Ex.: 1,2,3,4,5-1,3,4,5,6):");
+            String[] cartelasEntrada = scanner.nextLine().split("-");
 
-                System.out.println("Digite os números da sua cartela separados por vírgula (1,2,3,4,5): ");
-                String[] numeros = scanner.nextLine().split(",");
-                cartelasJogadores[i] = gerarCartelaManual(numeros);
+            for (int i = 0; i < nomesJogadores.length; i++) {
+                String[] numeros = cartelasEntrada[i].split(",");
+                Set<Integer> numerosEscolhidos = new HashSet<>();
+
+                for (int j = 0; j < numeros.length; j++) {
+                    int numeroEscolhido = Integer.parseInt(numeros[j].trim());
+
+                    while (numeroEscolhido < 1 || numeroEscolhido > 60 || numerosEscolhidos.contains(numeroEscolhido)) {
+                        System.out.println("Número inválido ou já escolhido. Digite novamente (entre 1 e 60): ");
+                        numeroEscolhido = Integer.parseInt(scanner.nextLine());
+                    }
+
+                    numerosEscolhidos.add(numeroEscolhido);
+                    cartelasJogadores[i][j] = numeroEscolhido;
+                }
             }
         }
 
         return cartelasJogadores;
-    }
-
-    private static int[] gerarCartelaAutomatica() {
-        int[] cartela = new int[5];
-        Set<Integer> numerosGerados = new HashSet<>();
-
-        Random random = new Random();
-
-        for (int i = 0; i < 5; i++) {
-            int num;
-            do {
-                num = random.nextInt(60) + 1;
-            } while (numerosGerados.contains(num));
-
-            cartela[i] = num;
-            numerosGerados.add(num);
-        }
-
-        return cartela;
     }
 
     private static boolean jogadorCadastrado(String nomeJogador, String[] nomesJogadores) {
@@ -110,7 +109,6 @@ public class bingo2 {
             atualizarCartelaEAcertos(cartela, numerosSorteadosRodada);
         }
 
-        // Atualizar o conjunto numerosSorteados após a rodada
         numerosSorteados.addAll(numerosSorteadosRodada);
     }
 
@@ -136,7 +134,6 @@ public class bingo2 {
             atualizarCartelaEAcertos(cartela, numerosSorteadosRodada);
         }
 
-        // Atualizar o conjunto numerosSorteados após a rodada
         numerosSorteados.addAll(numerosSorteadosRodada);
     }
 
@@ -153,55 +150,77 @@ public class bingo2 {
 
     private static void exibirRanking(String[] nomesJogadores, int[][] cartelasJogadores) {
         int[][] rankingOrdenado = Arrays.copyOf(cartelasJogadores, cartelasJogadores.length);
-        Arrays.sort(rankingOrdenado, (a, b) -> Integer.compare(contarAcertos(b), contarAcertos(a)));
+        Integer[] indices = new Integer[nomesJogadores.length];
 
-        System.out.println("Ranking:");
-        for (int i = 0; i < Math.min(3, nomesJogadores.length); i++) {
-            int indiceJogador = encontrarIndiceJogador(cartelasJogadores, rankingOrdenado[i]);
-            System.out.println((i + 1) + ". " + nomesJogadores[indiceJogador] + " - " + contarAcertos(rankingOrdenado[i]) + " acertos");
+        // Inicializa o array de índices
+        for (int i = 0; i < indices.length; i++) {
+            indices[i] = i;
+        }
+
+        // Ordena os índices com base no número de acertos e na ordem original
+        Arrays.sort(indices, (a, b) -> {
+            int comparacao = Integer.compare(contarAcertos(rankingOrdenado[b]), contarAcertos(rankingOrdenado[a]));
+            return (comparacao != 0) ? comparacao : Integer.compare(a, b);
+        });
+
+        System.out.println("Ranking Geral Ordenado pelo Número de Acertos:");
+        for (int i = 0; i < nomesJogadores.length; i++) {
+            int indiceJogador = indices[i];
+            System.out.println((i + 1) + ". " + nomesJogadores[indiceJogador] + " - " + contarAcertos(rankingOrdenado[indiceJogador]) + " acertos");
         }
     }
+
 
     private static void exibirEstatisticasFinais(int rodadas, String[] nomesJogadores, int[][] cartelasJogadores, Set<Integer> numerosSorteados, int[][] cartelasIniciaisJogadores) {
         System.out.println("\nEstatísticas Finais do Jogo:");
 
         System.out.println("Quantidade de Rodadas: " + rodadas);
 
-        int indiceVencedor = encontrarIndiceVencedor(cartelasJogadores);
-        System.out.println("Nickname do Vencedor: " + nomesJogadores[indiceVencedor]);
+        List<Integer> indicesVencedores = encontrarIndicesVencedores(cartelasJogadores);
+        System.out.print("Vencedores:");
+        for (int indice : indicesVencedores) {
+            System.out.print(" " + nomesJogadores[indice]);
+        }
+        System.out.println();
 
-        int indiceVencedorAtual = encontrarIndiceVencedor(cartelasJogadores);
-
-        if (indiceVencedorAtual != -1) {
-            System.out.println("Vencedor: " + nomesJogadores[indiceVencedorAtual]);
-            System.out.print("Cartela Inicial do Vencedor(a): ");
-            exibirIntArray(cartelasIniciaisJogadores[indiceVencedorAtual]);
-        } else {
-            System.out.println("Nenhum vencedor encontrado.");
+        for (int indiceVencedorAtual : indicesVencedores) {
+            if (indiceVencedorAtual != -1) {
+                System.out.println("Vencedor: " + nomesJogadores[indiceVencedorAtual]);
+                System.out.print("Cartela Inicial do Vencedor(a): ");
+                exibirIntArray(cartelasIniciaisJogadores[indiceVencedorAtual]);
+            } else {
+                System.out.println("Nenhum vencedor encontrado.");
+            }
         }
 
-        System.out.println("Números sorteados em ordem:");
+        System.out.println("Números sorteados em ordem crescente:");
         for (int numeroSorteado : numerosSorteados) {
             System.out.print(numeroSorteado + " ");
         }
         System.out.println();
 
-        System.out.println("Ranking Geral Ordenado pelo Número de Acertos:");
-        int[][] rankingOrdenado = Arrays.copyOf(cartelasJogadores, cartelasJogadores.length);
-        Arrays.sort(rankingOrdenado, Comparator.comparingInt(bingo2::contarAcertos).reversed());
+        exibirRanking(nomesJogadores, cartelasJogadores);
+    }
 
-        for (int i = 0; i < nomesJogadores.length; i++) {
-            System.out.println((i + 1) + ". " + nomesJogadores[encontrarIndiceJogador(cartelasJogadores, rankingOrdenado[i])] + " - " + contarAcertos(rankingOrdenado[i]) + " acertos");
+
+    private static List<Integer> encontrarIndicesVencedores(int[][] cartelasJogadores) {
+        List<Integer> indicesVencedores = new ArrayList<>();
+        for (int i = 0; i < cartelasJogadores.length; i++) {
+            if (verificarBingo(cartelasJogadores[i])) {
+                indicesVencedores.add(i);
+            }
         }
+        return indicesVencedores;
     }
 
     private static int encontrarIndiceVencedor(int[][] cartelasJogadores) {
-        for (int i = 0; i < cartelasJogadores.length; i++) {
-            if (verificarBingo(cartelasJogadores[i])) {
-                return i;
-            }
+        List<Integer> indicesVencedores = encontrarIndicesVencedores(cartelasJogadores);
+        if (indicesVencedores.isEmpty()) {
+            return -1;
+        } else {
+            // Retornar o índice do primeiro vencedor
+            return indicesVencedores.get(0);
         }
-        return -1;
     }
 
     private static int sortearNumeroUnicoAleatorio(Set<Integer> numerosSorteados) {
@@ -216,16 +235,20 @@ public class bingo2 {
         return numeroSorteado;
     }
 
-    private static int[] gerarCartelaAleatoria() {
+    private static int[] gerarCartelaAutomatica() {
         int[] cartela = new int[5];
+        Set<Integer> numerosGerados = new HashSet<>();
+
         Random random = new Random();
 
         for (int i = 0; i < 5; i++) {
             int num;
             do {
                 num = random.nextInt(60) + 1;
-            } while (contemNaArray(cartela, num));
+            } while (numerosGerados.contains(num));
+
             cartela[i] = num;
+            numerosGerados.add(num);
         }
 
         return cartela;
@@ -299,6 +322,12 @@ public class bingo2 {
         System.out.println();
     }
 
+    private static void exibirIntArray(int[][] arrays) {
+        for (int[] array : arrays) {
+            exibirIntArray(array);
+        }
+    }
+
     private static int[][] copiarCartelasInicial(int[][] cartelas) {
         int[][] copia = new int[cartelas.length][];
 
@@ -309,6 +338,4 @@ public class bingo2 {
         return copia;
     }
 }
-
-
 
