@@ -1,5 +1,5 @@
 # Multiplayer Bingo
-
+##Para o arquivo bingo.java
 Bem-vindo ao Bingo! Este é um programa Java que implementa um jogo de bingo para varios jogadores. 
 
 ## Como Jogar
